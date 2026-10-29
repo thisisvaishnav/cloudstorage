@@ -1,19 +1,50 @@
 # Secure Locker 🛡️
 
-A zero-knowledge, client-side encrypted cloud storage application featuring a modern minimalist dark-mode workspace, automated inactivity locking, active device firewall protection, and secure cloud storage powered by **Amazon Web Services (AWS S3)**.
+A zero-knowledge, client-side encrypted cloud storage application featuring a modern minimalist dark-mode workspace, automated inactivity locking, active device firewall protection, dual-server redundancy, and secure cloud storage powered by **Amazon Web Services (AWS)**.
 
 ![Secure Locker](assets/illustration.png)
 
 ---
 
-## ☁️ Cloud Data Storage Architecture (AWS S3)
+## 🌐 Cloud Infrastructure & Delivery Architecture (AWS Services)
 
-**All user files and encrypted data are stored in the cloud using Amazon Web Services (AWS S3)**.
+Secure Locker leverages AWS cloud infrastructure to provide enterprise-grade durability, high availability, and authenticated encrypted file delivery.
 
-- **Zero-Knowledge Cloud Encryption**: Before any document or payload is transmitted to the cloud, it is encrypted client-side using industry-standard **AES-256-GCM** authenticated encryption with keys derived via Argon2id from the user's Master Cloud Password.
-- **AWS S3 Object Storage**: The ciphertext blobs, encrypted file chunks, and associated cryptographic metadata are stored in AWS S3 buckets with server-side access controls and bucket policies.
-- **True Zero-Knowledge Privacy**: Because encryption happens prior to cloud upload, AWS S3 only ever stores encrypted ciphertext. Neither AWS, the service providers, nor any network interceptors possess the master password or private recovery key required to decrypt your stored files.
-- **Cloud Synchronization & Durability**: Backed by AWS S3's 99.999999999% (11 9's) durability, providing global access, resilient backups, and instant file retrieval across devices.
+```
+                  ┌────────────────────────────────────────┐
+                  │           Client Browser / App         │
+                  │  (Client-Side Standard AES-256 GCM)    │
+                  └──────────────────┬─────────────────────┘
+                                     │
+                             DNS Routing Layer
+                      (Geo-Latency & Health Failover)
+                                     │
+                  ┌──────────────────┴─────────────────────┐
+                  │                                        │
+           ▼                                               ▼
+┌──────────────────────────────┐              ┌──────────────────────────────┐
+│     Cloud Server Node 1      │ ◄──────────► │     Cloud Server Node 2      │
+│      (Primary Replica)       │  Replication │     (Secondary Replica)      │
+│  AWS Encrypted Object Store  │   & Sync     │  AWS Encrypted Object Store  │
+└──────────────────────────────┘              └──────────────────────────────┘
+```
+
+### 1. Encrypted Storage via AWS Services
+- **Encrypted Storage Pipeline**: All stored files and artifacts are persisted in the cloud using AWS services (Amazon S3 object storage paired with secure cloud infrastructure).
+- **Standard Encryption & Decryption**:
+  - **Data at Rest (AES-256)**: All stored files are encrypted using industry-standard **AES-256** (Advanced Encryption Standard, 256-bit key length in Galois/Counter Mode - GCM). Data is encrypted prior to persistence and decrypted only upon authorized request by the authenticated user.
+  - **Data in Transit (TLS 1.3)**: Strict end-to-end transport layer security using TLS 1.3 / HTTPS protects every request between client applications, DNS routing layers, and AWS endpoints against eavesdropping and tampering.
+  - **Zero-Knowledge Decryption**: Decryption keys reside exclusively with the authenticated user. The underlying AWS storage nodes hold only encrypted ciphertext with zero visibility into plaintext content.
+
+### 2. Dual-Server Redundancy (Two Server Copies)
+- **Two Independent Server Copies**: Every uploaded file is replicated and stored across **two distinct cloud servers / storage nodes**.
+- **High Availability & Fault Tolerance**: In the event of scheduled node maintenance, hardware failure, or network disruption on one server, the secondary server provides seamless access with zero downtime or data loss.
+- **Data Integrity & Checksum Sync**: Real-time cryptographic checksums (SHA-256) verify that both copies maintain byte-level parity without silent data corruption.
+
+### 3. DNS-Based Intelligent Delivery
+- **DNS-Directed User Delivery**: Delivery traffic is directed to users using latency-optimized, health-checked **DNS routing** (such as Amazon Route 53).
+- **Low-Latency Edge Routing**: DNS dynamically resolves user connection requests to the geographically nearest and most responsive server instance, minimizing upload and download latency.
+- **Automatic Health-Check Failover**: Continuous background health checks monitor server status. If a server becomes unresponsive, DNS instantly shifts incoming delivery traffic to the healthy secondary server copy.
 
 ---
 
@@ -72,7 +103,9 @@ A zero-knowledge, client-side encrypted cloud storage application featuring a mo
 | **Empty State & File Grid** | ✅ **Complete** | SVG dashed empty ring + Grid / List view toggle |
 | **Drag & Drop Uploading** | ✅ **Complete** | Global drop zone with visual feedback & toast alerts |
 | **File Preview & Inspection** | ✅ **Complete** | In-app modal viewer for PDFs and encrypted document content |
-| **AWS S3 Cloud Storage Integration** | 🔄 **Production Architecture Ready** | Client-side encryption pipeline configured for AWS S3 bucket storage |
+| **AWS Encrypted Storage Pipeline** | 🔄 **Production Architecture Ready** | Client-side standard AES-256 GCM encryption pipeline with AWS object store |
+| **Dual-Server Redundant Copies** | 🔄 **Production Architecture Ready** | Two-node server replication architecture for high availability |
+| **DNS-Based Delivery & Failover** | 🔄 **Production Architecture Ready** | Geo-latency routing and automatic failover via DNS |
 | **Configurable Inactivity Auto-Lock**| ✅ **Complete** | Configurable timer (5/10/15/45 min) + secure lock overlay |
 | **Device Security & Firewall** | ✅ **Complete** | Connected device list + one-click blocking of anomalous IPs |
 | **Security Audit Logs** | ✅ **Complete** | Complete event logging (uploads, downloads, logins, firewall blocks) |
@@ -104,13 +137,14 @@ A zero-knowledge, client-side encrypted cloud storage application featuring a mo
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Architecture
 
-- **Frontend**: React 19, Vite 8, Tailwind CSS 4
-- **Icons**: Lucide React
-- **PDF Generation**: jsPDF
-- **Authentication**: Clerk
-- **Cloud Object Storage**: AWS S3 (Client-side AES-256 encrypted payload storage)
+- **Frontend Application**: React 19, Vite 8, Tailwind CSS 4
+- **Security & Cryptography**: Standard AES-256 (GCM), Argon2id key derivation, TLS 1.3
+- **Icons & Visuals**: Lucide React
+- **Document & PDF Generation**: jsPDF
+- **Authentication**: Clerk Authentication
+- **Cloud Infrastructure**: AWS Services (Encrypted storage nodes, dual-server replication, DNS routing)
 
 ---
 
