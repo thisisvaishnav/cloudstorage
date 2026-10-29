@@ -27,7 +27,7 @@ import LockScreen from './LockScreen'
 
 export default function DriveDashboard({ userEmail, onSignOut }) {
   // Navigation states: 'my-files' | 'shared' | 'profile'
-  const [activeNav, setActiveNav] = useState('profile')
+  const [activeNav, setActiveNav] = useState('my-files')
   const [profileTab, setProfileTab] = useState('settings') // 'account' | 'settings' | 'passwords-help'
 
   // Files in local storage
