@@ -1,47 +1,48 @@
-# Secure Locker 🛡️
+# Secure Locker 🛡️ — Distributed File System (DFS) & Fault-Tolerant Cloud Storage
 
-A zero-knowledge, client-side encrypted cloud storage application featuring a modern minimalist dark-mode workspace, automated inactivity locking, active device firewall protection, dual-server redundancy, and secure cloud storage powered by **Amazon Web Services (AWS)**.
+A zero-knowledge, client-side encrypted distributed cloud storage and file management application featuring dual-server replication, automated crash recovery, public & private file access control, automated inactivity locking, active device firewall protection, and high-availability cloud infrastructure powered by **Amazon Web Services (AWS)**.
 
 ![Secure Locker](assets/illustration.png)
 
 ---
 
-## 🌐 Cloud Infrastructure & Delivery Architecture (AWS Services)
+## 🌐 Cloud Infrastructure & Distributed File System (DFS) Architecture
 
-Secure Locker leverages AWS cloud infrastructure to provide enterprise-grade durability, high availability, and authenticated encrypted file delivery.
+Secure Locker leverages a distributed file system architecture with dual-server redundancy and AWS cloud infrastructure to provide enterprise-grade durability, zero-knowledge privacy, continuous data recovery, and authenticated encrypted file delivery.
 
 ```
                   ┌────────────────────────────────────────┐
-                  │           Client Browser / App         │
-                  │  (Client-Side Standard AES-256 GCM)    │
-                  └──────────────────┬─────────────────────┘
-                                     │
-                             DNS Routing Layer
-                      (Geo-Latency & Health Failover)
-                                     │
-                  ┌──────────────────┴─────────────────────┐
+                  │          Client Browser / App          │
+                  │   (Client-Side Standard AES-256 GCM)   │
+                  └───────────────────┬────────────────────┘
+                                      │
+                              DNS Routing Layer
+                       (Geo-Latency & Health Failover)
+                                      │
+                  ┌───────────────────┴────────────────────┐
                   │                                        │
            ▼                                               ▼
 ┌──────────────────────────────┐              ┌──────────────────────────────┐
 │     Cloud Server Node 1      │ ◄──────────► │     Cloud Server Node 2      │
 │      (Primary Replica)       │  Replication │     (Secondary Replica)      │
-│  AWS Encrypted Object Store  │   & Sync     │  AWS Encrypted Object Store  │
+│  AWS Encrypted Object Store  │  & Recovery  │  AWS Encrypted Object Store  │
 └──────────────────────────────┘              └──────────────────────────────┘
 ```
 
-### 1. Encrypted Storage via AWS Services
+### 1. Distributed File System & Dual-Server Replication (Two Server Copies)
+- **Two Independent Server Copies**: Every uploaded file is replicated and stored across **two distinct cloud storage nodes / servers** (`Node 1 - Primary` and `Node 2 - Secondary`).
+- **Fault Tolerance & Zero Downtime**: If one server dies, suffers hardware failure, or undergoes maintenance, the secondary server provides immediate failover with zero downtime.
+- **Autonomous Recovery & Self-Healing**: When a failed server is brought back online, an automated recovery mechanism synchronizes missing data from the surviving node using cryptographic hashes, restoring full dual-copy redundancy.
+- **Data Integrity & Checksum Sync**: Real-time cryptographic checksums (SHA-256) verify that both copies maintain byte-level parity without silent data corruption.
+
+### 2. Encrypted Storage via AWS Services
 - **Encrypted Storage Pipeline**: All stored files and artifacts are persisted in the cloud using AWS services (Amazon S3 object storage paired with secure cloud infrastructure).
 - **Standard Encryption & Decryption**:
   - **Data at Rest (AES-256)**: All stored files are encrypted using industry-standard **AES-256** (Advanced Encryption Standard, 256-bit key length in Galois/Counter Mode - GCM). Data is encrypted prior to persistence and decrypted only upon authorized request by the authenticated user.
   - **Data in Transit (TLS 1.3)**: Strict end-to-end transport layer security using TLS 1.3 / HTTPS protects every request between client applications, DNS routing layers, and AWS endpoints against eavesdropping and tampering.
   - **Zero-Knowledge Decryption**: Decryption keys reside exclusively with the authenticated user. The underlying AWS storage nodes hold only encrypted ciphertext with zero visibility into plaintext content.
 
-### 2. Dual-Server Redundancy (Two Server Copies)
-- **Two Independent Server Copies**: Every uploaded file is replicated and stored across **two distinct cloud servers / storage nodes**.
-- **High Availability & Fault Tolerance**: In the event of scheduled node maintenance, hardware failure, or network disruption on one server, the secondary server provides seamless access with zero downtime or data loss.
-- **Data Integrity & Checksum Sync**: Real-time cryptographic checksums (SHA-256) verify that both copies maintain byte-level parity without silent data corruption.
-
-### 3. DNS-Based Intelligent Delivery
+### 3. DNS-Based Intelligent Delivery & Health Failover
 - **DNS-Directed User Delivery**: Delivery traffic is directed to users using latency-optimized, health-checked **DNS routing** (such as Amazon Route 53).
 - **Low-Latency Edge Routing**: DNS dynamically resolves user connection requests to the geographically nearest and most responsive server instance, minimizing upload and download latency.
 - **Automatic Health-Check Failover**: Continuous background health checks monitor server status. If a server becomes unresponsive, DNS instantly shifts incoming delivery traffic to the healthy secondary server copy.
@@ -73,6 +74,8 @@ Secure Locker leverages AWS cloud infrastructure to provide enterprise-grade dur
   - **Empty Folder State**: Custom circular dashed SVG ring with rounded dashes, dual-tone lilac folder graphic, and quick-add badge.
   - **Populated File View**: Responsive grid view or structured table list view with file type icons, sizes, modified timestamps, and quick action menus.
   - **Drag-and-Drop Uploader**: Full-screen drag overlay with real-time drop detection and file ingestion.
+- **Public & Private File Access Control**:
+  - Support for private vault files (encrypted with master key) and public shared documents via tokenized links.
 - **Contextual Right Information Drawer**:
   - Root view shows storage quota (`0 MB / 3.0 GB`), storage type (`Cloud storage`), and 3D cloud illustration.
   - File-selected view provides live file inspection, MIME type, AES-256 encryption status, in-app file preview, download, and deletion.
@@ -103,8 +106,9 @@ Secure Locker leverages AWS cloud infrastructure to provide enterprise-grade dur
 | **Empty State & File Grid** | ✅ **Complete** | SVG dashed empty ring + Grid / List view toggle |
 | **Drag & Drop Uploading** | ✅ **Complete** | Global drop zone with visual feedback & toast alerts |
 | **File Preview & Inspection** | ✅ **Complete** | In-app modal viewer for PDFs and encrypted document content |
+| **Public & Private File Governance** | ✅ **Complete** | Segregated private vault storage and public shared access |
 | **AWS Encrypted Storage Pipeline** | 🔄 **Production Architecture Ready** | Client-side standard AES-256 GCM encryption pipeline with AWS object store |
-| **Dual-Server Redundant Copies** | 🔄 **Production Architecture Ready** | Two-node server replication architecture for high availability |
+| **Distributed Dual-Server Redundancy** | 🔄 **Production Architecture Ready** | Two-node server replication architecture with auto-recovery |
 | **DNS-Based Delivery & Failover** | 🔄 **Production Architecture Ready** | Geo-latency routing and automatic failover via DNS |
 | **Configurable Inactivity Auto-Lock**| ✅ **Complete** | Configurable timer (5/10/15/45 min) + secure lock overlay |
 | **Device Security & Firewall** | ✅ **Complete** | Connected device list + one-click blocking of anomalous IPs |
@@ -123,16 +127,21 @@ Secure Locker leverages AWS cloud infrastructure to provide enterprise-grade dur
    - Drag-and-drop or manual upload of documents and PDFs.
    - Real-time client-side encryption tagging and storage calculation against the 3.0 GB tier.
    - In-app file previews, downloads, and deletions with instant UI updates.
+   - Public and private file separation and management.
 
-3. **Autonomous Session Protection**:
+3. **Distributed Redundancy & Recovery System**:
+   - Designed for dual-server replication across two nodes.
+   - Automatic failover if one node is unreachable, with automated delta re-sync when restored.
+
+4. **Autonomous Session Protection**:
    - Idle timer automatically transitions into `LockScreen` when the user steps away.
    - Re-entering the master password instantly restores the active workspace state.
 
-4. **Security Audit & Firewall Controls**:
+5. **Security Audit & Firewall Controls**:
    - Tracks all user operations in persistent activity logs.
    - Allows users to review active sessions and block suspicious remote devices.
 
-5. **Recovery Key Management**:
+6. **Recovery Key Management**:
    - Users can view, copy, or re-download their 16-digit Cloud Recovery Key PDF from both the dashboard header and the Settings page.
 
 ---
@@ -144,7 +153,7 @@ Secure Locker leverages AWS cloud infrastructure to provide enterprise-grade dur
 - **Icons & Visuals**: Lucide React
 - **Document & PDF Generation**: jsPDF
 - **Authentication**: Clerk Authentication
-- **Cloud Infrastructure**: AWS Services (Encrypted storage nodes, dual-server replication, DNS routing)
+- **Cloud & Distributed Infrastructure**: AWS Services (Dual encrypted storage nodes, multi-server replication, DNS routing)
 
 ---
 
