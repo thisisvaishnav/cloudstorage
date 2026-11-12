@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+  Link,
+} from 'react-router-dom'
+import {
   useSignIn,
   useSignUp,
   useUser,
@@ -67,9 +75,46 @@ function GlobeIcon() {
   )
 }
 
+// Common footer component for Login & Create Account pages
+function AuthFooter() {
+  return (
+    <footer className="w-full max-w-[1780px] mx-auto px-6 sm:px-12 py-8 flex flex-col md:flex-row items-center justify-between text-[13px] text-[#9a9ba4] gap-4">
+      <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 sm:gap-8">
+        <span>© 2026 Secure Locker. All rights reserved.</span>
+        <a href="#support" className="hover:text-white transition-colors duration-150">
+          Support center
+        </a>
+        <a href="#terms" className="hover:text-white transition-colors duration-150">
+          Terms of service
+        </a>
+      </div>
+
+      <div className="flex items-center gap-6 sm:gap-7">
+        <button
+          type="button"
+          className="flex items-center gap-2 hover:text-white transition-colors duration-150 cursor-pointer"
+        >
+          <SunIcon />
+          <span>Switch to light mode</span>
+        </button>
+
+        <button
+          type="button"
+          className="flex items-center gap-2 hover:text-white transition-colors duration-150 cursor-pointer"
+        >
+          <GlobeIcon />
+          <span>English</span>
+          <span className="text-[10px] ml-0.5">▼</span>
+        </button>
+      </div>
+    </footer>
+  )
+}
+
 // Dedicated SSO Callback processor component
 function SSOCallbackHandler() {
   const clerk = useClerk()
+  const navigate = useNavigate()
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
@@ -86,7 +131,7 @@ function SSOCallbackHandler() {
           },
           (to) => {
             if (active) {
-              window.location.href = to || '/'
+              navigate(to || '/')
             }
           }
         )
@@ -106,7 +151,7 @@ function SSOCallbackHandler() {
     return () => {
       active = false
     }
-  }, [clerk, clerk.loaded])
+  }, [clerk, clerk.loaded, navigate])
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#0e1016] text-white p-6 font-sans">
@@ -119,7 +164,7 @@ function SSOCallbackHandler() {
           <p className="text-sm text-[#9a9ba4] mb-6">{errorMsg}</p>
           <button
             onClick={() => {
-              window.location.href = '/'
+              navigate('/login')
             }}
             className="w-full py-3.5 rounded-full bg-[#3f5fff] hover:bg-[#3250e6] text-white font-medium text-sm transition-colors cursor-pointer"
           >
@@ -138,19 +183,15 @@ function SSOCallbackHandler() {
 }
 
 export default function App() {
-  // Check if we are on the sso callback route
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/sso-callback')) {
-    return <SSOCallbackHandler />
-  }
-
   const { isSignedIn, user, isLoaded: isUserLoaded } = useUser()
   const clerk = useClerk()
   const { signOut } = clerk
   const { isLoaded: isSignInLoaded, signIn, setActive: setSignInActive } = useSignIn()
   const { isLoaded: isSignUpLoaded, signUp, setActive: setSignUpActive } = useSignUp()
 
-  // 'home' | 'login' | 'signup'
-  const [currentView, setCurrentView] = useState('home')
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [step, setStep] = useState('email') // 'email' | 'code'
@@ -177,7 +218,7 @@ export default function App() {
     setStep('email')
     setGoogleLoading(false)
     setAppleLoading(false)
-  }, [currentView])
+  }, [location.pathname])
 
   // Google OAuth handler (handles both Sign-in and Sign-up unified)
   const handleGoogleAuth = async () => {
@@ -274,6 +315,7 @@ export default function App() {
     }
     if (!isSignInLoaded) {
       setDemoUser(email)
+      navigate('/')
       return
     }
 
@@ -325,6 +367,7 @@ export default function App() {
 
       if (result.status === 'complete') {
         await setSignInActive({ session: result.createdSessionId })
+        navigate('/')
       } else {
         setError('Verification incomplete. Please check your code.')
       }
@@ -345,6 +388,7 @@ export default function App() {
     }
     if (!isSignUpLoaded) {
       setDemoUser(email)
+      navigate('/')
       return
     }
 
@@ -384,6 +428,7 @@ export default function App() {
 
       if (completeSignUp.status === 'complete') {
         await setSignUpActive({ session: completeSignUp.createdSessionId })
+        navigate('/')
       } else {
         setError('Verification pending. Please verify your details.')
       }
@@ -395,82 +440,41 @@ export default function App() {
     }
   }
 
-  // Common footer component for Login & Create Account pages
-  const AuthFooter = () => (
-    <footer className="w-full max-w-[1780px] mx-auto px-6 sm:px-12 py-8 flex flex-col md:flex-row items-center justify-between text-[13px] text-[#9a9ba4] gap-4">
-      <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 sm:gap-8">
-        <span>© 2026 Secure Locker. All rights reserved.</span>
-        <a href="#support" className="hover:text-white transition-colors duration-150">
-          Support center
-        </a>
-        <a href="#terms" className="hover:text-white transition-colors duration-150">
-          Terms of service
-        </a>
-      </div>
+  const handleSignOut = () => {
+    if (isSignedIn && signOut) {
+      signOut()
+    }
+    setDemoUser(null)
+    setSetupCompleted(false)
+    navigate('/')
+  }
 
-      <div className="flex items-center gap-6 sm:gap-7">
-        <button
-          type="button"
-          className="flex items-center gap-2 hover:text-white transition-colors duration-150 cursor-pointer"
-        >
-          <SunIcon />
-          <span>Switch to light mode</span>
-        </button>
+  const isAuthenticated = Boolean((isUserLoaded && isSignedIn) || demoUser)
+  const userEmail = user?.primaryEmailAddress?.emailAddress || demoUser || 'user@securelocker.com'
+  const isSetupDone = isSetupCompleted(userEmail) || setupCompleted
 
-        <button
-          type="button"
-          className="flex items-center gap-2 hover:text-white transition-colors duration-150 cursor-pointer"
-        >
-          <GlobeIcon />
-          <span>English</span>
-          <span className="text-[10px] ml-0.5">▼</span>
-        </button>
-      </div>
-    </footer>
-  )
-
-  // 1. Authenticated: Check for Zero-Knowledge Cloud Password & Recovery Key Setup
-  if ((isUserLoaded && isSignedIn) || demoUser) {
-    const userEmail = user?.primaryEmailAddress?.emailAddress || demoUser || 'user@securelocker.com'
-    const completed = isSetupCompleted(userEmail) || setupCompleted
-
-    // Even if user signed up via Google or Apple ID or email, ask them to make a password & recovery key
-    if (!completed) {
+  // Landing / Main Welcome Page (Signed Out)
+  const renderHomePage = () => {
+    if (isAuthenticated) {
+      if (!isSetupDone) {
+        return (
+          <CloudSecuritySetup
+            userEmail={userEmail}
+            onFinish={() => {
+              setSetupCompleted(true)
+            }}
+            onSignOut={handleSignOut}
+          />
+        )
+      }
       return (
-        <CloudSecuritySetup
+        <DriveDashboard
           userEmail={userEmail}
-          onFinish={() => {
-            setSetupCompleted(true)
-          }}
-          onSignOut={() => {
-            if (isSignedIn && signOut) {
-              signOut()
-            }
-            setDemoUser(null)
-            setSetupCompleted(false)
-            setCurrentView('home')
-          }}
+          onSignOut={handleSignOut}
         />
       )
     }
 
-    return (
-      <DriveDashboard
-        userEmail={userEmail}
-        onSignOut={() => {
-          if (isSignedIn && signOut) {
-            signOut()
-          }
-          setDemoUser(null)
-          setSetupCompleted(false)
-          setCurrentView('home')
-        }}
-      />
-    )
-  }
-
-  // 2. Landing / Main Welcome Page (Signed Out)
-  if (currentView === 'home') {
     return (
       <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#1b1b1b] text-white selection:bg-[#5d59cb] selection:text-white font-sans antialiased overflow-x-hidden">
         {/* Left Column: Sign-in / Authentication */}
@@ -496,21 +500,19 @@ export default function App() {
             </p>
 
             <div className="mt-11 flex flex-col gap-3 w-full">
-              <button
-                type="button"
-                onClick={() => setCurrentView('login')}
+              <Link
+                to="/login"
                 className="w-full h-[62px] rounded-full bg-[#5d59cb] hover:bg-[#524eb8] active:bg-[#4945b0] text-white text-[16px] font-medium tracking-[-0.01em] transition-colors duration-150 flex items-center justify-center cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-[#5d59cb] focus:ring-offset-2 focus:ring-offset-[#1b1b1b]"
               >
                 Sign in
-              </button>
+              </Link>
 
-              <button
-                type="button"
-                onClick={() => setCurrentView('signup')}
+              <Link
+                to="/signup"
                 className="w-full h-[62px] rounded-full bg-transparent hover:bg-white/[0.04] active:bg-white/[0.08] text-white text-[16px] font-medium tracking-[-0.01em] border border-white/30 hover:border-white/50 transition-all duration-150 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-2 focus:ring-offset-[#1b1b1b]"
               >
                 Create new account
-              </button>
+              </Link>
             </div>
           </main>
 
@@ -532,8 +534,12 @@ export default function App() {
     )
   }
 
-  // 3. Login Page
-  if (currentView === 'login') {
+  // Login Page
+  const renderLoginPage = () => {
+    if (isAuthenticated) {
+      return <Navigate to="/" replace />
+    }
+
     return (
       <div className="min-h-screen w-full flex flex-col justify-between bg-[#0e1016] text-white selection:bg-[#3f5fff] selection:text-white font-sans antialiased">
         <div className="flex-1 flex items-center justify-center px-4 py-12">
@@ -547,13 +553,12 @@ export default function App() {
             {/* Subtitle link */}
             <p className="mt-3 text-[14.5px] text-[#9a9ba4] text-center">
               Don’t have an account?{' '}
-              <button
-                type="button"
-                onClick={() => setCurrentView('signup')}
+              <Link
+                to="/signup"
                 className="text-[#3f5fff] hover:underline cursor-pointer font-medium"
               >
                 Sign up
-              </button>
+              </Link>
             </p>
 
             {error && (
@@ -582,7 +587,8 @@ export default function App() {
                     disabled={loading}
                     className="mt-5 w-full h-[54px] rounded-full bg-[#3f5fff] hover:bg-[#3250e6] active:bg-[#2843cb] text-white text-[15px] font-medium transition-colors duration-150 flex items-center justify-center cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-[#3f5fff] focus:ring-offset-2 focus:ring-offset-[#151822] disabled:opacity-50"
                   >
-                    {loading ? 'Processing...' : 'Continue'}\n                  </button>
+                    {loading ? 'Processing...' : 'Continue'}
+                  </button>
                 </form>
 
                 {/* Forgot password link */}
@@ -624,6 +630,7 @@ export default function App() {
                       } else {
                         setDemoUser('demo.user@securelocker.com')
                       }
+                      navigate('/')
                     }}
                     className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center cursor-pointer"
                   >
@@ -676,77 +683,137 @@ export default function App() {
     )
   }
 
-  // 4. Create Account Page
-  return (
-    <div className="min-h-screen w-full flex flex-col justify-between bg-[#0e1016] text-white selection:bg-[#3f5fff] selection:text-white font-sans antialiased">
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
-        {/* Card */}
-        <div className="w-full max-w-[568px] bg-[#151822] rounded-[16px] px-8 sm:px-14 py-11 flex flex-col items-center shadow-2xl border border-white/[0.04]">
-          {/* Title */}
-          <h1 className="mt-2 text-[30px] sm:text-[32px] font-semibold text-white tracking-[-0.02em] text-center">
-            Create an account
-          </h1>
+  // Create Account Page
+  const renderSignUpPage = () => {
+    if (isAuthenticated) {
+      return <Navigate to="/" replace />
+    }
 
-          {/* Subtitle link */}
-          <p className="mt-3 text-[14.5px] text-[#9a9ba4] text-center">
-            Already have an account?{' '}
-            <button
-              type="button"
-              onClick={() => setCurrentView('login')}
-              className="text-[#3f5fff] hover:underline cursor-pointer font-medium"
-            >
-              Log in
-            </button>
-          </p>
+    return (
+      <div className="min-h-screen w-full flex flex-col justify-between bg-[#0e1016] text-white selection:bg-[#3f5fff] selection:text-white font-sans antialiased">
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          {/* Card */}
+          <div className="w-full max-w-[568px] bg-[#151822] rounded-[16px] px-8 sm:px-14 py-11 flex flex-col items-center shadow-2xl border border-white/[0.04]">
+            {/* Title */}
+            <h1 className="mt-2 text-[30px] sm:text-[32px] font-semibold text-white tracking-[-0.02em] text-center">
+              Create an account
+            </h1>
 
-          {error && (
-            <div className="mt-5 w-full px-4 py-3 rounded-[8px] bg-red-500/10 border border-red-500/30 text-red-300 text-[13.5px] text-center">
-              {error}
-            </div>
-          )}
+            {/* Subtitle link */}
+            <p className="mt-3 text-[14.5px] text-[#9a9ba4] text-center">
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                className="text-[#3f5fff] hover:underline cursor-pointer font-medium"
+              >
+                Log in
+              </Link>
+            </p>
 
-          {step === 'email' ? (
-            <>
-              {/* Social login buttons */}
-              <div className="mt-8 w-full flex flex-col gap-3">
-                <button
-                  type="button"
-                  disabled={googleLoading}
-                  onClick={handleGoogleAuth}
-                  className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
-                >
-                  <GoogleIcon />
-                  <span>{googleLoading ? 'Connecting to Google...' : 'Sign up with Google'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={appleLoading}
-                  onClick={handleAppleAuth}
-                  className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
-                >
-                  <AppleIcon />
-                  <span>{appleLoading ? 'Connecting to Apple...' : 'Sign up with Apple'}</span>
-                </button>
+            {error && (
+              <div className="mt-5 w-full px-4 py-3 rounded-[8px] bg-red-500/10 border border-red-500/30 text-red-300 text-[13.5px] text-center">
+                {error}
               </div>
+            )}
 
-              {/* Divider */}
-              <div className="my-7 w-full flex items-center gap-4">
-                <div className="flex-1 h-[1px] bg-[#292e3c]" />
-                <span className="text-[13px] text-[#868a97] font-normal">Or continue with</span>
-                <div className="flex-1 h-[1px] bg-[#292e3c]" />
-              </div>
+            {step === 'email' ? (
+              <>
+                {/* Social login buttons */}
+                <div className="mt-8 w-full flex flex-col gap-3">
+                  <button
+                    type="button"
+                    disabled={googleLoading}
+                    onClick={handleGoogleAuth}
+                    className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                  >
+                    <GoogleIcon />
+                    <span>{googleLoading ? 'Connecting to Google...' : 'Sign up with Google'}</span>
+                  </button>
 
-              {/* Email form */}
-              <form onSubmit={handleSignUpSubmit} className="w-full flex flex-col">
+                  <button
+                    type="button"
+                    disabled={appleLoading}
+                    onClick={handleAppleAuth}
+                    className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                  >
+                    <AppleIcon />
+                    <span>{appleLoading ? 'Connecting to Apple...' : 'Sign up with Apple'}</span>
+                  </button>
+                </div>
+
+                {/* Divider */}
+                <div className="my-7 w-full flex items-center gap-4">
+                  <div className="flex-1 h-[1px] bg-[#292e3c]" />
+                  <span className="text-[13px] text-[#868a97] font-normal">Or continue with</span>
+                  <div className="flex-1 h-[1px] bg-[#292e3c]" />
+                </div>
+
+                {/* Email form */}
+                <form onSubmit={handleSignUpSubmit} className="w-full flex flex-col">
+                  <div className="w-full">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email address"
+                      required
+                      className="w-full h-[58px] px-4 rounded-[6px] bg-transparent border border-[#303544] text-[15px] text-white placeholder-[#787c8c] focus:outline-none focus:border-[#3f5fff] transition-colors"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="mt-5 w-full h-[54px] rounded-full bg-[#3f5fff] hover:bg-[#3250e6] active:bg-[#2843cb] text-white text-[15px] font-medium transition-colors duration-150 flex items-center justify-center cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-[#3f5fff] focus:ring-offset-2 focus:ring-offset-[#151822] disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Continue'}
+                  </button>
+                </form>
+
+                {/* Direct Workspace Preview / Instant Signup Test */}
+                <div className="mt-4 w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const demoEmail = email || 'vaishnavxmass@gmail.com'
+                      setDemoUser(demoEmail)
+                      navigate('/')
+                    }}
+                    className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center cursor-pointer"
+                  >
+                    Test Account Signup & Cloud Security Setup
+                  </button>
+                </div>
+
+                {/* Disclaimer text */}
+                <p className="mt-6 text-[12px] text-[#868a97] leading-relaxed text-center max-w-[440px]">
+                  By signing up, you agree with our{' '}
+                  <a href="#terms" className="text-[#a4a8b5] underline hover:text-white transition-colors">
+                    terms of service
+                  </a>{' '}
+                  and{' '}
+                  <a href="#privacy" className="text-[#a4a8b5] underline hover:text-white transition-colors">
+                    privacy policy
+                  </a>
+                  . You’ll be able to change notification settings for marketing emails in your Secure Locker Account.
+                </p>
+              </>
+            ) : (
+              /* Verification Code Form */
+              <form onSubmit={handleSignUpCodeSubmit} className="mt-8 w-full flex flex-col">
+                <p className="text-[14px] text-[#b4b4b4] text-center mb-4">
+                  Enter the verification code sent to <span className="text-white font-medium">{email}</span>
+                </p>
+
                 <div className="w-full">
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email address"
+                    type="text"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="Enter code"
+                    autoFocus
                     required
-                    className="w-full h-[58px] px-4 rounded-[6px] bg-transparent border border-[#303544] text-[15px] text-white placeholder-[#787c8c] focus:outline-none focus:border-[#3f5fff] transition-colors"
+                    className="w-full h-[58px] px-4 rounded-[6px] bg-transparent border border-[#303544] text-[16px] text-white text-center tracking-widest placeholder-[#787c8c] focus:outline-none focus:border-[#3f5fff] transition-colors"
                   />
                 </div>
 
@@ -755,78 +822,34 @@ export default function App() {
                   disabled={loading}
                   className="mt-5 w-full h-[54px] rounded-full bg-[#3f5fff] hover:bg-[#3250e6] active:bg-[#2843cb] text-white text-[15px] font-medium transition-colors duration-150 flex items-center justify-center cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-[#3f5fff] focus:ring-offset-2 focus:ring-offset-[#151822] disabled:opacity-50"
                 >
-                  {loading ? 'Processing...' : 'Continue'}
+                  {loading ? 'Verifying...' : 'Verify & Continue'}
                 </button>
-              </form>
 
-              {/* Direct Workspace Preview / Instant Signup Test */}
-              <div className="mt-4 w-full">
                 <button
                   type="button"
-                  onClick={() => {
-                    const demoEmail = email || 'vaishnavxmass@gmail.com'
-                    setDemoUser(demoEmail)
-                  }}
-                  className="w-full h-[56px] rounded-full bg-transparent border border-[#303544] hover:bg-white/[0.03] active:bg-white/[0.06] text-white text-[14.5px] font-medium transition-all duration-150 flex items-center justify-center cursor-pointer"
+                  onClick={() => setStep('email')}
+                  className="mt-4 text-[13.5px] text-[#9a9ba4] hover:text-white transition-colors"
                 >
-                  Test Account Signup & Cloud Security Setup
+                  Use a different email
                 </button>
-              </div>
-
-              {/* Disclaimer text */}
-              <p className="mt-6 text-[12px] text-[#868a97] leading-relaxed text-center max-w-[440px]">
-                By signing up, you agree with our{' '}
-                <a href="#terms" className="text-[#a4a8b5] underline hover:text-white transition-colors">
-                  terms of service
-                </a>{' '}
-                and{' '}
-                <a href="#privacy" className="text-[#a4a8b5] underline hover:text-white transition-colors">
-                  privacy policy
-                </a>
-                . You’ll be able to change notification settings for marketing emails in your Secure Locker Account.
-              </p>
-            </>
-          ) : (
-            /* Verification Code Form */
-            <form onSubmit={handleSignUpCodeSubmit} className="mt-8 w-full flex flex-col">
-              <p className="text-[14px] text-[#b4b4b4] text-center mb-4">
-                Enter the verification code sent to <span className="text-white font-medium">{email}</span>
-              </p>
-
-              <div className="w-full">
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Enter code"
-                  autoFocus
-                  required
-                  className="w-full h-[58px] px-4 rounded-[6px] bg-transparent border border-[#303544] text-[16px] text-white text-center tracking-widest placeholder-[#787c8c] focus:outline-none focus:border-[#3f5fff] transition-colors"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-5 w-full h-[54px] rounded-full bg-[#3f5fff] hover:bg-[#3250e6] active:bg-[#2843cb] text-white text-[15px] font-medium transition-colors duration-150 flex items-center justify-center cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-[#3f5fff] focus:ring-offset-2 focus:ring-offset-[#151822] disabled:opacity-50"
-              >
-                {loading ? 'Verifying...' : 'Verify & Continue'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep('email')}
-                className="mt-4 text-[13.5px] text-[#9a9ba4] hover:text-white transition-colors"
-              >
-                Use a different email
-              </button>
-            </form>
-          )}
+              </form>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <AuthFooter />
-    </div>
+        {/* Footer */}
+        <AuthFooter />
+      </div>
+    )
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={renderHomePage()} />
+      <Route path="/login" element={renderLoginPage()} />
+      <Route path="/signup" element={renderSignUpPage()} />
+      <Route path="/sso-callback" element={<SSOCallbackHandler />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
